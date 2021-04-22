@@ -25,25 +25,57 @@ after((done) => {
   done()
 })
 
-
 describe('Message API endpoints', () => {
     beforeEach((done) => {
         // TODO: add any beforeEach code here
-        done()
+        //create a user to author the test message
+        //create a message to use for message endpoints
+        const sampleUser = new User({
+            username: 'myuser',
+            password: 'mypassword'
+        })
+        sampleUser.save()
+        const sampleMessage = new Message({
+            title: 'myMessage',
+            body: 'Body of myMessage',
+            author: sampleUser._id
+        })
+        sampleMessage.save()
+        .then(() => {
+            done()
+        })
     })
 
     afterEach((done) => {
-        // TODO: add any afterEach code here
-        done()
+        User.deleteMany({ username: ['myuser'] })
+        Message.deleteMany({ title: ['myMessage'] })
+        .then(() => {
+            done()
+        })   
     })
 
     it('should load all messages', (done) => {
-        // TODO: Complete this
-        done()
+        chai.request(app)
+        .get('/messages')
+        .end((err, res) => {
+            if (err) { done(err) }
+            expect(res).to.have.status(200)
+            expect(res.body.messages).to.be.an("array")
+            done();
+        })
     })
 
     it('should get one specific message', (done) => {
-        // TODO: Complete this
+        const sampleMessage = Message.findOne({title:'myMessage'})
+        chai.request(app)
+        .get(`/messages/${sampleMessage._id}`)
+        .end((err, res) => {
+            if (err) { done(err) }
+            expect(res).to.have.status(200)
+            expect(res.body).to.be.an('object')
+            expect(res.body.title).to.equal('myMessage')
+            expect(res.body.body).to.equal('Body of myMessage')
+        })
         done()
     })
 
