@@ -34,13 +34,19 @@ describe('Message API endpoints', () => {
             username: 'myuser',
             password: 'mypassword'
         })
-        sampleUser.save()
         const sampleMessage = new Message({
             title: 'myMessage',
-            body: 'Body of myMessage',
-            author: sampleUser._id
+            body: 'Body of myMessage'
         })
-        sampleMessage.save()
+        sampleUser.save()
+        .then( () => {
+            sampleMessage.author = sampleUser
+            return sampleMessage.save()
+        })
+        .then(() => {
+            sampleUser.messages.unshift(sampleMessage)
+            return sampleUser.save()
+        })
         .then(() => {
             done()
         })
@@ -66,22 +72,40 @@ describe('Message API endpoints', () => {
     })
 
     it('should get one specific message', (done) => {
-        const sampleMessage = Message.findOne({title:'myMessage'})
-        chai.request(app)
-        .get(`/messages/${sampleMessage._id}`)
-        .end((err, res) => {
-            if (err) { done(err) }
-            expect(res).to.have.status(200)
-            expect(res.body).to.be.an('object')
-            expect(res.body.title).to.equal('myMessage')
-            expect(res.body.body).to.equal('Body of myMessage')
+        Message.findOne({title:'myMessage'})
+        .then((message) => {
+            chai.request(app)
+            .get(`/messages/${message._id}`)
+            .end((err, res) => {
+                if (err) { done(err) }
+                expect(res).to.have.status(200)
+                expect(res.body).to.be.an('object')
+                expect(res.body.title).to.equal('myMessage')
+                expect(res.body.body).to.equal('Body of myMessage')
+                done()
+            })
         })
-        done()
+        
+        
+        
     })
 
     it('should post a new message', (done) => {
-        // TODO: Complete this
-        done()
+        const sampleAuthor = User.findOne({username: 'myuser'})
+        chai.request(app)
+        .post('/messages')
+        .send({title: 'New message title', body: 'New body', author: sampleAuthor._id })
+        .end((err, res) => {
+            if(err) {done(err) }
+            expect(res.body.message).to.be.an('object')
+            expect(res.body.message).to.have.property('title', 'body', 'author')
+
+            Message.findOne({title: 'New message title'}).then(message => {
+                expect(message).to.be.an('object')
+                done()
+            })
+        })
+        
     })
 
     it('should update a message', (done) => {
