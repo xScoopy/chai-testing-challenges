@@ -91,24 +91,30 @@ describe('Message API endpoints', () => {
     })
 
     it('should post a new message', (done) => {
-        const sampleAuthor = User.findOne({username: 'myuser'})
-        chai.request(app)
-        .post('/messages')
-        .send({title: 'New message title', body: 'New body', author: sampleAuthor._id })
-        .end((err, res) => {
-            if(err) {done(err) }
-            expect(res.body.message).to.be.an('object')
-            expect(res.body.message).to.have.property('title', 'body', 'author')
-
-            Message.findOne({title: 'New message title'}).then(message => {
-                expect(message).to.be.an('object')
-                done()
+        User.findOne({username: 'myuser'})
+        .then((user) => {
+            chai.request(app)
+            .post('/messages')
+            .send({title: 'New message title', body: 'New body', author: user })
+            .end( (err, res) => {
+                if(err) { done(err) 
+                } else {
+                    expect(res.body.title).to.be.equal('New message title')
+                    expect(res.body).to.be.an('object')
+                    Message.findOne({title: 'New message title'})
+                    .then( (message) => {
+                        expect(message).to.be.an('object')
+                        done()
+                    })
+                }
             })
         })
-        
+        .catch(err => {
+            throw err.message
+        })
     })
 
-    it('should update a message', (done) => {
+     it('should update a message', (done) => {
         // TODO: Complete this
         done()
     })
