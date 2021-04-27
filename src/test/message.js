@@ -57,6 +57,9 @@ describe('Message API endpoints', () => {
         Message.deleteMany({ title: ['myMessage'] })
         .then(() => {
             done()
+        })
+        .catch((err) => {
+            console.log(err)
         })   
     })
 
@@ -115,12 +118,49 @@ describe('Message API endpoints', () => {
     })
 
      it('should update a message', (done) => {
-        // TODO: Complete this
-        done()
+        Message.findOne({title: 'myMessage'})
+        .then( (message) => {
+            chai.request(app)
+            .put(`/messages/${message._id}`)
+            .send({title: 'Updated myMessage'})
+            .end( (err, res) => {
+                if (err) {
+                    done(err)
+                } else { 
+                    expect(res.body.updatedMessage.title).to.be.equal('Updated myMessage')
+                    expect(res.body.updatedMessage).to.be.an('object')
+
+                    //ensure it was updated in db
+                    Message.findOne({title: 'Updated myMessage'})
+                    .then( (message) => {
+                        expect(message.title).to.be.equal('Updated myMessage')
+                        done()
+                    })
+                }
+            })
+        })
     })
 
     it('should delete a message', (done) => {
-        // TODO: Complete this
-        done()
+        Message.findOne({title: 'myMessage'})
+        .then((message) => {
+            chai.request(app)
+            .delete(`/messages/${message._id}`)
+            .end((err, res) => {
+                if (err) {
+                    done(err)
+                } else {
+                    expect(res.body.message).to.equal('Successfully deleted.')
+                    //make sure its not in db anymore
+                    Message.findOne({title: 'myMessage' })
+                    .then((message) => {
+                        expect(message).to.equal(null)
+                        done()
+                    })
+                    
+                }
+            })
+        })
+        
     })
 })

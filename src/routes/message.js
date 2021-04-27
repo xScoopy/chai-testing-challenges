@@ -16,15 +16,12 @@ router.get('/', (req, res) => {
 
 /** Route to get one message by id. */
 router.get('/:messageId', (req, res) => {
-    // TODO: Get the Message object with id matching `req.params.id`
-    // using `findOne`
     Message.findOne({_id: req.params.messageId})
     .then(result => {
         res.json(result)
     }).catch(err => {
         throw err.message
     })
-    // TODO: Return the matching Message object as JSON
 })
 
 /** Route to add a new message. */
@@ -49,16 +46,39 @@ router.post('/', (req, res) => {
 /** Route to update an existing message. */
 router.put('/:messageId', (req, res) => {
     // TODO: Update the matching message using `findByIdAndUpdate`
-
-    // TODO: Return the updated Message object as JSON
+    Message.findByIdAndUpdate(req.params.messageId, req.body)
+    .then(() => {
+        return Message.findOne({_id: req.params.messageId})
+    }).then((updatedMessage) => {
+        return res.json({updatedMessage})
+    }).catch((err) => {
+        throw err.message
+    })
 })
 
 /** Route to delete a message. */
 router.delete('/:messageId', (req, res) => {
-    // TODO: Delete the specified Message using `findByIdAndDelete`. Make sure
-    // to also delete the message from the User object's `messages` array
-
-    // TODO: Return a JSON object indicating that the Message has been deleted
+    Message.findByIdAndDelete(req.params.messageId)
+    .then((result) => {
+        if (result === null) {
+            return res.json({message: 'User does not exist.'})
+        } else {
+            User.findOne({_id: result.author})
+            .then((user) => {
+                let messageDelete = user.messages.indexOf(result._id)
+                user.messages.splice(messageDelete)
+                user.save()
+            }).then(() => {
+                return res.json({
+                    'message': 'Successfully deleted.',
+                    '_id': req.params.messageId
+                })
+            })    
+        }
+    })
+    .catch((err) => {
+        throw err.message
+    })
 })
 
 module.exports = router
